@@ -1,0 +1,17 @@
+{
+  "name": "silk-wagmi-connector",
+  "version": "0.0.1",
+  "description": "A wagmi connector for Silk",
+  "main": "",
+  "repository": "git@github.com:holonym-foundation/silk-wagmi-connector",
+  "author": "",
+  "license": "",
+  "private": true,
+  "dependencies": {
+    "@silk-wallet/silk-interface-core": "^0.0.7",
+    "@silk-wallet/silk-wallet-sdk": "^0.0.26",
+    "@wagmi/core": "^2.13.5",
+    "typescript": "^5.6.2",
+    "viem": "^2.21.10"
+  }
+}
