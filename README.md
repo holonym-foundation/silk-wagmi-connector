@@ -11,17 +11,17 @@ use regualar wagmi hooks in their app to integrate the Silk SDK.
 ```js
 const wagmiConfig: Config = createConfig({
   chains: [mainnet],
-  connectors: [silk('myRefCode')],
+  connectors: [silk({ referralCode: 'xyz', config: { appName: 'My App', appLogo: 'https://path-to-my-logo', darkMode: true } })],
 ```
 
 Two options to establish a connection:
 
 ```js
-const { connect, error, connectors } = useConnect();
+const { connect, error, connectors } = useConnect()
 
 // use the connector from wagmi config:
-const silkConnector = connectors.find((connector) => connector.id === "silk");
-connect({ chainId: silkConnector.getChainId(), connector: silkConnector });
+const silkConnector = connectors.find((connector) => connector.id === 'silk')
+connect({ chainId: silkConnector.getChainId(), connector: silkConnector })
 // or connect dynamically
-connect({ chainId: optimism, connector: silk() });
+connect({ chainId: optimism, connector: silk() })
 ```

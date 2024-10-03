@@ -1,14 +1,17 @@
-import { ChainNotConfiguredError, createConnector } from "@wagmi/core";
+import { ChainNotConfiguredError, createConnector } from '@wagmi/core'
 import {
   Chain,
   getAddress,
   SwitchChainError,
-  UserRejectedRequestError,
-} from "viem";
+  UserRejectedRequestError
+} from 'viem'
 
-import { SILK_METHOD } from "@silk-wallet/silk-interface-core";
-import { initSilk } from "@silk-wallet/silk-wallet-sdk";
-import { SilkEthereumProviderInterface } from "@silk-wallet/silk-wallet-sdk/dist/lib/provider/types";
+import {
+  CustomConfig,
+  SILK_METHOD
+} from '@silk-wallet/silk-interface-core/dist/esm'
+import { initSilk } from '@silk-wallet/silk-wallet-sdk/dist'
+import { SilkEthereumProviderInterface } from '@silk-wallet/silk-wallet-sdk/dist/lib/provider/types'
 
 // For reference: WAGMI connector event map: wagmi/packages/core/src/connectors/createConnector.ts
 // type ConnectorEventMap = {
@@ -24,102 +27,105 @@ import { SilkEthereumProviderInterface } from "@silk-wallet/silk-wallet-sdk/dist
 
 /**
  * Creates a WAGMI connector for the Silk Wallet SDK
- * @param referralCode Optional referral code for the Silk points system
+ * @param options Initialization options for the Silk Wallet SDK
  * @returns
  */
-export default function silk(referralCode?: string) {
-  let silkProvider: SilkEthereumProviderInterface | null = null;
+export default function silk(options?: {
+  referralCode?: string
+  config?: CustomConfig
+}) {
+  let silkProvider: SilkEthereumProviderInterface | null = null
 
   return createConnector<SilkEthereumProviderInterface>((config) => ({
-    id: "silk",
-    name: "Silk Security Connector",
-    type: "Silk",
+    id: 'silk',
+    name: 'Silk Security Connector',
+    type: 'Silk',
     chains: config.chains,
     supportsSimulation: false,
 
     async connect({ chainId } = {}) {
       try {
-        config.emitter.emit("message", {
-          type: "connecting",
-        });
-        const provider = await this.getProvider();
+        config.emitter.emit('message', {
+          type: 'connecting'
+        })
+        const provider = await this.getProvider()
 
-        provider.on("accountsChanged", this.onAccountsChanged);
-        provider.on("chainChanged", this.onChainChanged);
-        provider.on("disconnect", this.onDisconnect);
+        provider.on('accountsChanged', this.onAccountsChanged)
+        provider.on('chainChanged', this.onChainChanged)
+        provider.on('disconnect', this.onDisconnect)
 
         if (!provider.connected) {
           try {
-            provider.login();
+            provider.login()
           } catch (error) {
-            console.warn("Unable to login", error);
+            console.warn('Unable to login', error)
             throw new UserRejectedRequestError(
-              "User rejected login" as unknown as Error
-            );
+              'User rejected login' as unknown as Error
+            )
           }
         }
 
-        let currentChainId = await this.getChainId();
+        let currentChainId = await this.getChainId()
         if (chainId && currentChainId !== chainId) {
           const chain = await this.switchChain!({ chainId }).catch((error) => {
-            if (error.code === UserRejectedRequestError.code) throw error;
-            return { id: currentChainId };
-          });
-          currentChainId = chain?.id ?? currentChainId;
+            if (error.code === UserRejectedRequestError.code) throw error
+            return { id: currentChainId }
+          })
+          currentChainId = chain?.id ?? currentChainId
         }
 
-        const accounts = await this.getAccounts();
+        const accounts = await this.getAccounts()
 
-        return { accounts, chainId: currentChainId };
+        return { accounts, chainId: currentChainId }
       } catch (error) {
-        console.error("Error while connecting", error);
-        this.onDisconnect();
-        throw error;
+        console.error('Error while connecting', error)
+        this.onDisconnect()
+        throw error
       }
     },
 
     async getAccounts() {
-      const provider = await this.getProvider();
+      const provider = await this.getProvider()
       const accounts = await provider.request({
-        method: SILK_METHOD.eth_accounts,
-      });
+        method: SILK_METHOD.eth_accounts
+      })
 
       if (accounts && Array.isArray(accounts))
-        return accounts.map((x: string) => getAddress(x));
-      return [];
+        return accounts.map((x: string) => getAddress(x))
+      return []
     },
 
     async getChainId() {
-      const provider = await this.getProvider();
+      const provider = await this.getProvider()
       const chainId = await provider.request({
-        method: SILK_METHOD.eth_chainId,
-      });
-      return Number(chainId);
+        method: SILK_METHOD.eth_chainId
+      })
+      return Number(chainId)
     },
 
     async getProvider(): Promise<SilkEthereumProviderInterface> {
       if (!silkProvider) {
-        silkProvider = initSilk(referralCode);
+        silkProvider = initSilk(options)
       }
 
-      return silkProvider;
+      return silkProvider
     },
 
     async isAuthorized() {
       try {
-        const accounts = await this.getAccounts();
-        return !!accounts.length;
+        const accounts = await this.getAccounts()
+        return !!accounts.length
       } catch {
-        return false;
+        return false
       }
     },
 
     async switchChain({ chainId }): Promise<Chain> {
       try {
-        const chain = config.chains.find((x) => x.id === chainId);
-        if (!chain) throw new SwitchChainError(new ChainNotConfiguredError());
+        const chain = config.chains.find((x) => x.id === chainId)
+        if (!chain) throw new SwitchChainError(new ChainNotConfiguredError())
 
-        const provider = await this.getProvider();
+        const provider = await this.getProvider()
         // Silk currently does not support adding chains. Leaving this here for future reference.
         // await provider.request({
         //   method: SILK_METHOD.wallet_addEthereumChain,
@@ -141,47 +147,47 @@ export default function silk(referralCode?: string) {
         // console.info('Chain Added: ', chain.name);
         await provider.request({
           method: SILK_METHOD.wallet_switchEthereumChain,
-          params: [`0x${chain.id.toString(16)}`],
-        });
-        console.info("Chain Switched to ", chain.name);
-        config.emitter.emit("change", {
-          chainId,
-        });
-        return chain;
+          params: [{ chainId: `0x${chain.id.toString(16)}` }]
+        })
+        console.info('Chain switched to:', chain.name, chain.id)
+        config.emitter.emit('change', {
+          chainId
+        })
+        return chain
       } catch (error: unknown) {
-        console.error("Error: Unable to switch chain", error);
-        throw new SwitchChainError(error as Error);
+        console.error('Error: Unable to switch chain', error)
+        throw new SwitchChainError(error as Error)
       }
     },
 
     async disconnect(): Promise<void> {
-      const provider = await this.getProvider();
+      const provider = await this.getProvider()
       provider.uiMessageManager.removeListener(
-        "accountsChanged",
+        'accountsChanged',
         this.onAccountsChanged
-      );
+      )
       provider.uiMessageManager.removeListener(
-        "chainChanged",
+        'chainChanged',
         this.onChainChanged
-      );
-      provider.uiMessageManager.removeListener("disconnect", this.onDisconnect);
+      )
+      provider.uiMessageManager.removeListener('disconnect', this.onDisconnect)
     },
 
     onAccountsChanged(accounts) {
-      if (accounts.length === 0) config.emitter.emit("disconnect");
+      if (accounts.length === 0) config.emitter.emit('disconnect')
       else
-        config.emitter.emit("change", {
-          accounts: accounts.map((x) => getAddress(x)),
-        });
+        config.emitter.emit('change', {
+          accounts: accounts.map((x) => getAddress(x))
+        })
     },
 
     onChainChanged(chain) {
-      const chainId = Number(chain);
-      config.emitter.emit("change", { chainId });
+      const chainId = Number(chain)
+      config.emitter.emit('change', { chainId })
     },
 
     onDisconnect(): void {
-      config.emitter.emit("disconnect");
-    },
-  }));
+      config.emitter.emit('disconnect')
+    }
+  }))
 }

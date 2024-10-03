@@ -7,11 +7,22 @@
   "author": "",
   "license": "",
   "private": true,
+  "scripts": {
+    "build": "tsc --noEmit",
+    "prepare": "husky",
+    "lint": "npx eslint ."
+  },
   "dependencies": {
-    "@silk-wallet/silk-interface-core": "^0.0.7",
-    "@silk-wallet/silk-wallet-sdk": "^0.0.26",
+    "@silk-wallet/silk-wallet-sdk": "^0.1.1",
+    "@types/node": "^22.7.4",
     "@wagmi/core": "^2.13.5",
-    "typescript": "^5.6.2",
     "viem": "^2.21.10"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "husky": "^9.1.4",
+    "prettier": "^3.3.3"
   }
 }
