@@ -56,7 +56,7 @@ export default function silk(options?: {
 
         if (!provider.connected) {
           try {
-            provider.login()
+            await provider.login()
           } catch (error) {
             console.warn('Unable to login', error)
             throw new UserRejectedRequestError(
